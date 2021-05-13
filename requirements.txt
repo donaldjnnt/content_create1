@@ -84,7 +84,7 @@ m2w64-gcc-libgfortran==5.3.0
 m2w64-gcc-libs==5.3.0
 m2w64-gcc-libs-core==5.3.0
 m2w64-gmp==6.1.0
-m2w64-libwinpthread-git==5.0.0.4634.697f757
+#m2w64-libwinpthread-git==5.0.0.4634.697f757
 markupsafe==1.1.1
 matplotlib-inline==0.1.2
 mistune==0.8.4
