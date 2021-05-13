@@ -92,7 +92,7 @@ mistune==0.8.4
 mkl-service==2.3.0
 mkl_fft==1.3.0
 mkl_random==1.2.1
-msys2-conda-epoch==20160418
+#msys2-conda-epoch==20160418
 nbclient==0.5.3
 nbconvert==6.0.7
 nbformat==5.1.3
@@ -105,7 +105,7 @@ packaging==20.9
 pandas==1.2.4
 #pandoc==2.12
 pandocfilters==1.4.3
-parquet-cpp==1.5.1
+#parquet-cpp==1.5.1
 parse==1.19.0
 parso==0.8.2
 pathlib==1.0.1
