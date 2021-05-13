@@ -2,7 +2,7 @@
 # $ conda create --name <env> --file <this file>
 # platform: win-64
 # abseil-cpp==20210324.1==h0e60522_0
-abseil-cpp==20210324.1
+# abseil-cpp==20210324.1
 altair==4.1.0
 appdirs==1.4.4
 argh==0.26.2
