@@ -13,10 +13,10 @@ async_generator==1.1
 attrs==20.3.0
 # aws-c-cal==0.5.7
 # aws-c-common==0.5.11
-aws-c-event-stream==0.2.7
-aws-c-io==0.9.12
-aws-checksums==0.1.11
-aws-sdk-cpp==1.8.186
+#aws-c-event-stream==0.2.7
+#aws-c-io==0.9.12
+#aws-checksums==0.1.11
+#aws-sdk-cpp==1.8.186
 backcall==0.2.0
 base58==2.1.0
 beautifulsoup4==4.9.3
