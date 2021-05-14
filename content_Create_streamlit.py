@@ -23,7 +23,7 @@ from requests_html import HTML
 from requests_html import HTMLSession
 import trafilatura
 import altair as alt
-from PIL import Image
+# from PIL import Image
 from pathlib import Path
 import time
 
@@ -33,7 +33,7 @@ def img_to_bytes(img_path):
     return encoded
 
 header_html = "<img src='data:image/png;base64,{}' class='img-fluid'>".format(
-    img_to_bytes("C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg")
+    img_to_bytes("DeepSphere Logo.jpg")
 )
 st.markdown(
     header_html, unsafe_allow_html=True,
@@ -235,9 +235,6 @@ def main():
 #        elif (View_Option == 'Download'):
 #            st.markdown(download_link(list3, 'model_output.txt', 'Click here to download the extracted text'),unsafe_allow_html=True)
 main()
-
-
-# In[ ]:
 
 
 
