@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[19]:
-
-
 import streamlit as st
 import streamlit.components as stc
 import pandas as pd
@@ -23,9 +17,12 @@ from requests_html import HTML
 from requests_html import HTMLSession
 import trafilatura
 import altair as alt
-# from PIL import Image
+from PIL import Image
 from pathlib import Path
 import time
+
+import os
+from docx import Document
 
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
@@ -33,7 +30,7 @@ def img_to_bytes(img_path):
     return encoded
 
 header_html = "<img src='data:image/png;base64,{}' class='img-fluid'>".format(
-    img_to_bytes("DSLogo.png")
+    img_to_bytes("C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg")
 )
 st.markdown(
     header_html, unsafe_allow_html=True,
@@ -41,6 +38,38 @@ st.markdown(
 #image = Image.open('C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg')
 
 #st.image(image)
+
+#LOGO_IMAGE = "C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg"
+#
+#st.markdown(
+#    """
+#    <style>
+#    .container {
+#        display: flex;
+#    }
+#    .logo-text {
+#        font-weight:70 !important;
+#        font-size:10px !important;
+#        color: #f9a01b !important;
+#        padding-top: 75px !important;
+#    }
+#    .logo-img {
+#        float:right;
+#    }
+#    </style>
+#    """,
+#    unsafe_allow_html=True
+#)
+#
+#st.markdown(
+#    f"""
+#    <div class="container">
+#        <img class="logo-img" src="data:image/png;base64,{base64.b64encode(open(LOGO_IMAGE, "rb").read()).decode()}">
+#        <p class="logo-text">Logo Much ?</p>
+#    </div>
+#    """,
+#    unsafe_allow_html=True
+#)
 
 
 st.title("Content Creation for the Given Topic using **_Web Scraping_** and **_NLP_**")
@@ -105,16 +134,16 @@ def scrape_google(query):
 
 def text_downloader(raw_text):
 	b64 = base64.b64encode(raw_text.encode()).decode()
-	new_filename = "new_text_file_{}_.txt".format(timestr)
+	new_filename = "new_text_file_{}_.docx".format(timestr)
 	st.markdown("#### Download File ###")
-	href = f'<a href="data:file/txt;base64,{b64}" download="{new_filename}">Click Here!!</a>'
+	href = f'<a href="data:file/docx;base64,{b64}" download="{new_filename}">Click Here!!</a>'
 	st.markdown(href,unsafe_allow_html=True)
     
 class FileDownloader(object):
 	"""docstring for FileDownloader
 	>>> download = FileDownloader(data,filename,file_ext).download()
 	"""
-	def __init__(self, data,filename='myfile',file_ext='txt'):
+	def __init__(self, data,filename='myfile',file_ext='docx'):
 		super(FileDownloader, self).__init__()
 		self.data = data
 		self.filename = filename
@@ -139,7 +168,10 @@ def download_link(object_to_download, download_filename, download_link_text):
     """
 #     if isinstance(object_to_download,pd.DataFrame):
 #         object_to_download = object_to_download.to_csv(index=False)
-    object_to_download = str(object_to_download)
+    doc = Document()
+#    with open("C:\\Users\\Darcey\\Downloads\\model_output.txt", 'r', encoding='utf-8') as file:
+    doc.add_paragraph(object_to_download)
+    doc_to_save = doc.save(str(Topic)+".docx")
 #    object_to_download1 = ""
 #    if quest_type == "Input Text":
 #        object_to_download1 = "="*100+"\r\n"
@@ -173,9 +205,10 @@ def download_link(object_to_download, download_filename, download_link_text):
 #        for i,que in enumerate(object_to_download):
 #            object_to_download1+=f"{str(i+1)}. {que}\r\n"
 #    object_to_download1+=f"\r\n"
-    b64 = base64.b64encode(object_to_download.encode()).decode()
+#    b64 = base64.b64encode(object_to_download)#.encode()).decode()
     
-    return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+#    return f'<a href="data:file/docx;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+    return doc_to_save
 
 #Topic = st.text_input('Input the topic here:')
 
@@ -191,38 +224,61 @@ def Extract_Contents(df):
         # outputs main content and comments as plain text ...
         list1 = trafilatura.extract(downloaded, include_comments=False)
         # outputs main content without comments as XML ...
+        list2.append("\n")
+        list2.append("---------------------------------------------------------------------------------------------------------------------")
+        list2.append("\n")
+        list2.append("Below contents are extracted from this url:")
+        list2.append("\n")
+        list2.append(url)
+        list2.append("\n")
         list2.append(list1)
         list3 = ''.join(filter(None, list2))
     return list3
 
 def View_Extracted_Contents(list3):
     Extracted_Contents = list3
+#    data = [content.strip() for content in Extracted_Contents.splitlines() if content]
+#    data1 = ''.join([str(elem) for elem in data])
     return Extracted_Contents
 
+def para_correct(list3):
+    data = [content.strip() for content in list3.splitlines() if content]
+    data1 = ''.join([str(elem) for elem in data])
+    return data1
+
 def main():
-    Topic = st.text_input('Input the topic here:')
+    Topic = st.text_input('Input the topic here and press ENTER:')
     
 #if len(Topic)>0:
-    if st.sidebar.button("Extract URLs"):
+    if st.sidebar.button("Extract URLs for the given topic"):
         with st.spinner("Extracting..."):
             df = Extract_urls(Topic)
             st.write("Below are the top URLs to extract content:")
             for x in df['link']:
                 st.write(x)
     st.sidebar.markdown("*******************************")
-    if st.sidebar.button("Extract Contents from URLs and Get Download Link"):
+    if st.sidebar.button("Download Contents from URLs"):
 #    if text is not None:
-        with st.spinner("Extracting..."):
+        with st.spinner("Downloading..."):
             df = Extract_urls(Topic)
             list3 = Extract_Contents(df)
-        st.markdown(download_link(list3, 'model_output.txt', 'Click here to download the extracted text'),unsafe_allow_html=True)
+#            data1 = para_correct(list3)
+            data = [content.strip() for content in list3.splitlines() if content]
+            data1 = '\\n\n'.join(f"{row}\n" for row in data)
+            doc = Document()
+            doc.add_paragraph(data1)
+#            doc.paragraph_format.space_after = Inches(1.0)
+            doc_to_save = doc.save(str(Topic)+".docx")
+        st.markdown("Download Complete")
     st.sidebar.markdown("*******************************")
     if st.sidebar.checkbox("View the Extracted Contents"):
         with st.spinner("Downloading the Contents..."):
             df = Extract_urls(Topic)
             list3 = Extract_Contents(df)
             Extracted_Contents = View_Extracted_Contents(list3)
-            st.write(Extracted_Contents)
+            data = [content.strip() for content in Extracted_Contents.splitlines() if content]
+            for x in data:
+                st.write(x)
 #        if not st.sidebar.checkbox("View the Extracted Contents"):
 #            with st.spinner("Fetching the link to download..."):
 #            df = Extract_urls(Topic)
@@ -235,7 +291,3 @@ def main():
 #        elif (View_Option == 'Download'):
 #            st.markdown(download_link(list3, 'model_output.txt', 'Click here to download the extracted text'),unsafe_allow_html=True)
 main()
-
-
-
-
