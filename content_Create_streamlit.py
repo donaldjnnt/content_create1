@@ -336,6 +336,7 @@ def main():
             for x in data:
                 st.write(x)
 	    st.write("")
+	
             list2 = []
             for url in clean_links:
                 downloaded = trafilatura.fetch_url(url)
