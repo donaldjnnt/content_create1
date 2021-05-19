@@ -5,11 +5,6 @@ import numpy as np
 import pathlib
 import base64
 
-#import plotly.express as px
-#from plotly.subplots import make_subplots
-#import plotly.graph_objects as go
-#import matplotlib.pyplot as plt
-
 import requests
 import urllib
 import pandas as pd
@@ -20,7 +15,7 @@ import altair as alt
 from PIL import Image
 from pathlib import Path
 import time
-import io
+#import io
 import os
 from docx import Document
 from fake_useragent import UserAgent
