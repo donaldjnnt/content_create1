@@ -335,7 +335,7 @@ def main():
             data = [content.strip() for content in Extracted_Contents.splitlines() if content]
             for x in data:
                 st.write(x)
-	    st.markdown("****************************************************")
+#	    st.markdown("****************************************************")
             list2 = []
             for url in clean_links:
                 downloaded = trafilatura.fetch_url(url)
