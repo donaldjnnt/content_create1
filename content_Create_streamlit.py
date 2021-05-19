@@ -269,7 +269,7 @@ def main():
             doc.add_paragraph(data1)
 #            doc.paragraph_format.space_after = Inches(1.0)
             doc_to_save = doc.save(str(Topic)+".docx")
-	    os.startfile(str(Topic)+".docx")
+#	    os.startfile(str(Topic)+".docx")
         st.markdown("Download Complete")
     st.sidebar.markdown("*******************************")
     if st.sidebar.checkbox("View the Extracted Contents"):
