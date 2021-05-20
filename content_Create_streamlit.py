@@ -5,6 +5,11 @@ import numpy as np
 import pathlib
 import base64
 
+#import plotly.express as px
+#from plotly.subplots import make_subplots
+#import plotly.graph_objects as go
+#import matplotlib.pyplot as plt
+
 import requests
 import urllib
 import pandas as pd
@@ -15,7 +20,7 @@ import altair as alt
 from PIL import Image
 from pathlib import Path
 import time
-#import io
+import io
 import os
 from docx import Document
 from fake_useragent import UserAgent
@@ -324,11 +329,11 @@ def main():
 #            href = f'<a href="data:file/docx;base64,{b64}">Download docx file</a>'
 #            st.markdown(href, unsafe_allow_html=True)
 #            doc.paragraph_format.space_after = Inches(1.0)
-	    try:
-		doc.save(str(Topic)+".docx")
-		break
-	    except:
-		print("Oops!", sys.exc_info()[0], "occurred.")
+            try:
+                doc.save(str(Topic)+".docx")
+                break
+            except:
+                print("Oops!", sys.exc_info()[0], "occurred.")
         st.markdown("Download Complete")
     st.sidebar.markdown("*******************************")
     if st.sidebar.checkbox("View the Extracted Contents"):
@@ -346,6 +351,7 @@ def main():
                 trafilatura.extract(downloaded)
                 # outputs main content and comments as plain text ...
                 list1 = trafilatura.extract(downloaded, include_comments=False)
+                st.write("***************************************")
                 st.write(url)
                 if list1 is None:
                     st.write("Contents not available")
