@@ -331,7 +331,6 @@ def main():
 #            doc.paragraph_format.space_after = Inches(1.0)
             try:
                 doc.save(str(Topic)+".docx")
-                break
             except:
                 print("Oops!", sys.exc_info()[0], "occurred.")
         st.markdown("Download Complete")
