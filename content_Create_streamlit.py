@@ -21,6 +21,7 @@ from docx import Document
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 import re
+import sys
 
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
@@ -322,8 +323,12 @@ def main():
 #            b64 = base64.b64encode(docx)  # some strings <-> bytes conversions necessary here
 #            href = f'<a href="data:file/docx;base64,{b64}">Download docx file</a>'
 #            st.markdown(href, unsafe_allow_html=True)
-            doc.paragraph_format.space_after = Inches(1.0)
-            doc.save(str(Topic)+".docx")
+#            doc.paragraph_format.space_after = Inches(1.0)
+	    try:
+		doc.save(str(Topic)+".docx")
+		break
+	    except:
+		print("Oops!", sys.exc_info()[0], "occurred.")
         st.markdown("Download Complete")
     st.sidebar.markdown("*******************************")
     if st.sidebar.checkbox("View the Extracted Contents"):
