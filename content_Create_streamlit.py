@@ -331,8 +331,9 @@ def main():
 #            doc.paragraph_format.space_after = Inches(1.0)
             try:
                 doc.save(str(Topic)+".docx")
+		pass
             except:
-                print("Oops!", sys.exc_info()[0], "occurred.")
+                st.write("Oops!", sys.exc_info()[0], "occurred.")
         st.markdown("Download Complete")
     st.sidebar.markdown("*******************************")
     if st.sidebar.checkbox("View the Extracted Contents"):
