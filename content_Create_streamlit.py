@@ -38,9 +38,9 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement, ns
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.enum.text import WD_LINE_SPACING
-import nltk
-nltk.download('punkt')
-from nltk.tokenize import sent_tokenize
+#import nltk
+#nltk.download('punkt')
+#from nltk.tokenize import sent_tokenize
 
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
