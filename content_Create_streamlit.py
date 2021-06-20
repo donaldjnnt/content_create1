@@ -393,7 +393,7 @@ def main():
 #                section.right_margin = Cm(1)
             ##### add logo in Zoned header
             
-            logo_path = 'C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg'    # Path of the image file
+            logo_path = 'DSLogo.png'    # Path of the image file
             section = doc.sections[0]   # Create a section
             sec_header = section.header   # Create header 
             header_tp = sec_header.add_paragraph()  # Add a paragraph in the header, you can add any anything in the paragraph
