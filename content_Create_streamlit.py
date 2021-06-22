@@ -51,6 +51,8 @@ import unicodedata
 import selenium
 from selenium import webdriver
 
+from webdriver_manager.chrome import ChromeDriverManager
+
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
     encoded = base64.b64encode(img_bytes).decode()
