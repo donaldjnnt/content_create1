@@ -5,10 +5,6 @@ import numpy as np
 import pathlib
 import base64
 
-#import plotly.express as px
-#from plotly.subplots import make_subplots
-#import plotly.graph_objects as go
-#import matplotlib.pyplot as plt
 
 import requests
 import urllib
@@ -27,7 +23,6 @@ from docx import Document
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 import re
-import sys
 
 from docx.shared import Inches, Cm
 from docx.shared import RGBColor
@@ -38,9 +33,23 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement, ns
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.enum.text import WD_LINE_SPACING
-#import nltk
-#nltk.download('punkt')
-#from nltk.tokenize import sent_tokenize
+import nltk
+nltk.download('punkt')
+from nltk.tokenize import sent_tokenize
+
+from urllib.request import Request, urlopen
+from bs4 import BeautifulSoup as soup
+import mock
+
+import docx
+from docx import Document
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+
+import unicodedata
+
+import selenium
+from selenium import webdriver
 
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
@@ -53,41 +62,6 @@ header_html = "<img src='data:image/png;base64,{}' class='img-fluid'>".format(
 st.markdown(
     header_html, unsafe_allow_html=True,
 )
-#image = Image.open('C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg')
-
-#st.image(image)
-
-#LOGO_IMAGE = "C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg"
-#
-#st.markdown(
-#    """
-#    <style>
-#    .container {
-#        display: flex;
-#    }
-#    .logo-text {
-#        font-weight:70 !important;
-#        font-size:10px !important;
-#        color: #f9a01b !important;
-#        padding-top: 75px !important;
-#    }
-#    .logo-img {
-#        float:right;
-#    }
-#    </style>
-#    """,
-#    unsafe_allow_html=True
-#)
-#
-#st.markdown(
-#    f"""
-#    <div class="container">
-#        <img class="logo-img" src="data:image/png;base64,{base64.b64encode(open(LOGO_IMAGE, "rb").read()).decode()}">
-#        <p class="logo-text">Logo Much ?</p>
-#    </div>
-#    """,
-#    unsafe_allow_html=True
-#)
 
 
 st.title("Content Creation for the Given Topic using **_Web Scraping_** and **_NLP_**")
@@ -212,6 +186,18 @@ def scrape_google_all(Topic):
         # Next loop if one element is not present
         except:
             continue
+    google_domains = ('https://www.google.', 
+                      'https://google.', 
+                      'https://webcache.googleusercontent.', 
+                      'http://webcache.googleusercontent.', 
+                      'https://policies.google.',
+                      'https://support.google.',
+                      'https://maps.google.',
+                      'https://www.youtube.')
+
+    for url in links[:]:
+        if url.startswith(google_domains):
+            links.remove(url)
     return links
 
 def Extract_Ranked_urls(links):
@@ -236,41 +222,87 @@ def Extract_urls(Topic):
     df = pd.DataFrame(scrape_google(Topic), columns = ['link'])
     return df
 
-def Extract_Contents(clean_links):
-    list2 = []
-    i=1
-    for url in clean_links:
-        downloaded = trafilatura.fetch_url(url)
-        trafilatura.extract(downloaded)
-        # outputs main content and comments as plain text ...
-        list1 = trafilatura.extract(downloaded, include_comments=False)
-        # outputs main content without comments as XML ...
-        list2.append("\n")
-        list2.append("---------------------------------------------------------------------------------------------------------------------")
-        list2.append("\n")
-        list2.append("**Content Set #")
-        list2.append(str(i))
-        list2.append("**")
-        list2.append("\n")
-        list2.append("\n")
-        list2.append("URL #")
-        list2.append(str(i))
-        list2.append(":    ")
-        list2.append(url)
-        list2.append("\n")
-        list2.append("---------------------------------------------------------------------------------------------------------------------")
-        list2.append("\n")
-        list2.append("\n")
-        list2.append(list1)
-        list2.append("\n")
-        list2.append("---------------------------------------------------------------------------------------------------------------------")
-        list2.append("\n")
-        list2.append("---------------------------------------------------------------------------------------------------------------------")
-        list2.append("\n")
-        list2.append("\n")
+def Extract_URLs_New(Topic):
+    query = Topic
+    driver_location = "chromedriver.exe"
+    options = webdriver.ChromeOptions()
+    options.add_argument('--lang=en,en_US')
+    # options.add_argument('--disable-gpu')
+    # options.add_argument('--no-sandbox')
+    options.add_argument('Accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/webp')
+    # options.add_argument('Accept-Encoding= gzip')
+    # options.add_argument('Accept-Language= en-US,en;q=0.9,es;q=0.8')
+    # options.add_argument('Upgrade-Insecure-Requests: 1')
+    # options.add_argument('image/apng,*/*;q=0.8,application/signed-exchange;v=b3')
+    # options.add_argument('user-agent=' + ua['google chrome'])
+    # options.add_argument('proxy-server=' + "115.42.65.14:8080")
+    # options.add_argument('Referer=' + "https://www.google.com/")
+    options.add_argument('--headless')
+    driver = webdriver.Chrome(executable_path=driver_location,options=options)
+
+    driver.get("https://www.google.com/search?q={}&oq={}&hl=en&num=10".format(urllib.parse.quote(query),urllib.parse.quote(query)))
+    p = driver.find_elements_by_class_name("tF2Cxc")
+    titles = driver.find_elements_by_class_name("yuRUbf")
+    descriptions = driver.find_elements_by_class_name("IsZvec")
+    time.sleep(10)
+
+    link_list = []
+    description_list = []
+    featured = False
+    featured_links = 0
+    title_list = []
+    featured_max = 0
+    featured_num = 0
+
+    df1 = pd.DataFrame(columns=["URLs"])
+    for index in range(len(p)):
+        p_items = p[index].get_attribute("innerHTML")
+    #    print(p_items)
+        items_soup = BeautifulSoup(p_items,"html.parser")
+        if(featured==False):
+            if((len(items_soup.text.split("\n")) != 2)):
+                print(items_soup.text.split("\n"))
+    #            df = df.append({'A': items_soup.text.split("\n")
+    #            df["B"] = items_soup.text.split("\n")[1]
+    #            if ((items_soup.select(".IsZvec") != None)
+    #                  and (items_soup.select(".IsZvec")[0].text != "") and (items_soup.select(".IsZvec") != "")):
+                a = items_soup.select("a",recursive=False)[0]["href"]
+                print(a)
+                df1 = df1.append({'URLs': a}, ignore_index = True)
+                link_list.append(a)
+        title_list.append(titles[index].text)
+        description_list.append(descriptions[index].text)
+    description_list_new = []
+    title_list_new = []
+    for index in range(len(description_list)):
+    #    if (description_list[index] == ""):
+    #        pass
+    #    elif (re.findall(r'<\w{1,}\s\w{1,}>',description_list[index]) != []):
+    #        pass
+    #    else:
+        description_list_new.append(description_list[index])
+        title_list_new.append(title_list[index])
+    description_list = description_list_new
+    title_list = title_list_new
+
+    df = pd.DataFrame(columns=["Title", "Description"])
+    i=0
+    for title in range(len(title_list)):
+        print(title_list[title])
+        print(description_list[title])
+        print("=======================")
+        df = df.append({'Title': title_list[title], 'Description': description_list[title]}, ignore_index = True)
+    #    df.loc[i].B = description_list[title]
         i+=1
-        list3 = ''.join(filter(None, list2))
-    return list3
+
+    #print(link_list)
+    #print(len(title_list))
+    #print(len(link_list))
+
+    #for x in link_list:
+    #    print(x)
+    df2 = pd.concat([df, df1], axis=1)
+    return df2
 
 def View_Extracted_Contents(list3):
     Extracted_Contents = list3
@@ -341,58 +373,84 @@ def add_page_number(paragraph):
     
 ##################### To add page number in the footer ###############################################
 
+def remove_control_characters(s):
+    return "".join(ch for ch in s if unicodedata.category(ch)[0]!="C")
 
 def main():
     Topic = st.text_input('Input the topic here and press ENTER:')
     i=1
-#if len(Topic)>0:
+    #if len(Topic)>0:
     if st.sidebar.button("Extract URLs for the given topic"):
         with st.spinner("Extracting..."):
-            links = scrape_google_all(Topic)
-            clean_links = Extract_Ranked_urls(links)
+            df2 = Extract_URLs_New(Topic)
+            df2_filter = df2[df2['Title']!= ""]
+            df2_filter['url_rank'] = np.arange(len(df2_filter)) + 1
+            df3 = df2_filter[['url_rank', 'URLs']]
+            df3['URLRank_URLS'] = "URL #" + df3['url_rank'].astype(str) + " - " + df3['URLs']
+#            clean_links = Extract_Ranked_urls(links)
             st.write("Below are the top URLs to extract content:")
-            for x in clean_links:
+            for x in df3['URLRank_URLS']:
                 st.write(x)
     st.sidebar.markdown("*******************************")
     if st.sidebar.button("Download Contents from URLs"):
-#    if text is not None:
         with st.spinner("Downloading..."):
-#            i=1
-            links = scrape_google_all(Topic)
-            clean_links = Extract_Ranked_urls(links)
-            list3 = Extract_Contents(clean_links)
-#            data1 = para_correct(list3)
-            data = [content.strip() for content in list3.splitlines() if content]
-            data1 = '\\n\n'.join(f"{row}\n" for row in data)
-        
+            df2 = Extract_URLs_New(Topic)
+            df2_filter = df2[df2['Title']!= ""]
+#            clean_links = Extract_Ranked_urls(links)
+
 ############ Converting listof urls to dataframe and then to tuple to create the table in word document##########
 
-            df = pd.DataFrame(clean_links, columns = ['urls'])
-            df['url_rank'] = np.arange(len(df)) + 1
-            df1 = df[['url_rank', 'urls']]
-#            print (df1)
-            datat = tuple(df1.itertuples(index=False, name=None))
-    
+#            df = pd.DataFrame(clean_links, columns = ['urls'])
+            df2_filter['url_rank'] = np.arange(len(df2_filter)) + 1
+            df3 = df2_filter[['url_rank', 'URLs']]
+            Search_for_These_values = ['youtube','.pdf','.pptx'] 
+            pattern = '|'.join(Search_for_These_values)
+            df4 = df3.loc[~df3['URLs'].str.contains(pattern, case=False)]
+            #            print (df1)
+            datat = tuple(df3.itertuples(index=False, name=None))
 
-#            print(datat)
+
+            #            print(datat)
             doc = docx.Document()
 
-##################### To add logo ###############################################
-            ##### add logo in normal header
-#            doc = docx.Document()
-            #p = doc.add_paragraph()
-            #r = p.add_run()
-            #r.add_picture('C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg', width=Inches(1.5))
+##################### To add table of contents ###############################################
 
-            
-#            sections2 = doc.sections
-#            for section in sections2:
-#                section.top_margin = Cm(0.5)
-#                section.bottom_margin = Cm(0.5)
-#                section.left_margin = Cm(1)
-#                section.right_margin = Cm(1)
-            ##### add logo in Zoned header
-            
+
+            paragraph = doc.add_paragraph()
+            toc = paragraph.add_run("\t Table of Contents - " + str(Topic).upper())
+            toc.bold = True
+            toc.font.size = Pt(14)
+            toc.font.color.rgb = RGBColor(0, 0, 0)
+            run = paragraph.add_run()
+            fldChar = OxmlElement('w:fldChar')  # creates a new element
+            fldChar.set(qn('w:fldCharType'), 'begin')  # sets attribute on element
+            instrText = OxmlElement('w:instrText')
+            instrText.set(qn('xml:space'), 'preserve')  # sets attribute on element
+            instrText.text = 'TOC \\o "1-3" \\h \\z \\u'   # change 1-3 depending on heading levels you need
+
+            fldChar2 = OxmlElement('w:fldChar')
+            fldChar2.set(qn('w:fldCharType'), 'separate')
+            fldChar3 = OxmlElement('w:updateFields')
+            fldChar3.set(qn('w:val'), 'true')
+            #fldChar3.text = "Right-click to update field."
+            fldChar2.append(fldChar3)
+
+            fldChar4 = OxmlElement('w:fldChar')
+            fldChar4.set(qn('w:fldCharType'), 'end')
+
+            r_element = run._r
+            r_element.append(fldChar)
+            r_element.append(instrText)
+            r_element.append(fldChar2)
+            r_element.append(fldChar4)
+            p_element = paragraph._p
+
+            doc.add_page_break()
+
+##################### To add logo ###############################################
+
+        ##### add logo in Zoned header
+
             logo_path = 'DSLogo.png'    # Path of the image file
             section = doc.sections[0]   # Create a section
             sec_header = section.header   # Create header 
@@ -400,31 +458,14 @@ def main():
             header_run = header_tp.add_run()   # Add a run in the paragraph. In the run you can set the values 
             header_run.add_picture(logo_path, width=Inches(1.3))  # Add a picture and set width.
             #rml_header = "\t Applied Artificial Intelligence for Schools Content \t Generation by Topic \t"
-            header_run.add_text("\n                                                                                                 ")
+            header_run.add_text("\n                                                                                                        ")
             header_run.add_text("Applied Artificial Intelligence for Schools Content Generation by Topic")
-            header_run.add_text("\n__________________________________________________________________________________")
-            header_run.font.size =  Pt(14)
-    
-            #section1 = doc.sections[0]
-            #header = section1.header
-            #htable=header.add_table(1, 2, Inches(6))
-            #htab_cells=htable.rows[0].cells
-            #ht0=htab_cells[0].add_paragraph()
-            #kh=ht0.add_run()
-            #kh.add_picture('C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg', width=Inches(1.2))
-            #ht1=htab_cells[1].add_paragraph('Applied Artificial Intelligence for Schools Content Generation by Topic')
-            #ht1.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-#            ht1.style.font.size = Pt(13)
-#            ht1.style.font.bold = True
-            #paragraph = header.paragraphs[0]
-            #run1 = paragraph.add_run()
-            #run1.add_picture("C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg", width=Inches(1))
-            #run1.text = 'Applied Artificial Intelligence for Schools Content Generation by Topic'
-            #run1.alignment=WD_ALIGN_PARAGRAPH.LEFT
-            #run1.font.color.rgb = RGBColor(0, 0, 0)
-            #run1.font.size = Pt(13)
-            #run1.font.bold = True
-#            run1.font.underline = True
+            header_run.add_text("\n_______________________________________________________________________________________")
+            header_run.font.size =  Pt(13)
+            header_run.font.color.rgb = RGBColor(0, 0, 0)
+            header_run.font.bold = True
+
+
             doc.add_paragraph('')
 #            doc.add_paragraph('')
 
@@ -433,26 +474,19 @@ def main():
             section = doc.sections[0]
             footer = section.footer
             footer_para = footer.paragraphs[0]
-            footer_para.text = "© DeepSphere.AI | Confidential and Proprietary |Not for Distribution \t"
+            footer_para.text = "_________________________________________________________________________________ \t \n\n © DeepSphere.AI | Confidential and Proprietary |Not for Distribution \t"
             add_page_number(doc.sections[0].footer.paragraphs[0])
-#            heading = doc.add_heading('\t Applied Artificial Intelligence for Schools Content Generation by Topic \t', 0)
-#            heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
-#            heading.style.font.color.rgb = RGBColor(0, 0, 0)
-#            heading.style.font.size = Pt(18)
-#            heading.style.font.bold = True
-            #heading.style.font.underline = True
 
-##################### To add given topic as sub header ###############################################
-
-            topic1 = "Topic: " + Topic
-            #topic = doc.add_heading("Topic: ", 1)
-            topic = doc.add_heading(topic1, 1)
-            doc.add_paragraph('')
-            topic.style.font.color.rgb = RGBColor(0, 0, 0)
-            topic.style.font.size = Pt(14)
-            topic.style.font.bold = True
-            
 ##################### To add table with url and its ranking ###############################################
+
+#Add heading for the table
+
+            table_heading = doc.add_heading("Extracted URls and its Ranking for the Given Topic:", 1)
+            doc.add_paragraph('')
+            table_heading.style.font.color.rgb = RGBColor(0, 0, 153)
+            table_heading.style.font.size = Pt(16)
+            table_heading.style.font.bold = True
+            table_heading.style.font.all_caps = True
 
             table = doc.add_table(rows=1, cols=2)
             row = table.rows[0].cells
@@ -474,71 +508,107 @@ def main():
 ##################### To export/save the document ###############################################
 
 
-#            for x in list2:
-    
-#    doc = docx.Document()
+            #            for x in list2:
+
+            #    doc = docx.Document()
             doc.add_page_break()
-            sent2 = sent_tokenize(list3)
-#            doc = docx.Document()
-            for ss in sent2:
-                doc.add_paragraph(ss)
+            #            text_split = []
+            df2 = Extract_URLs_New(Topic)
+            df2_filter = df2[df2['Title']!= ""]
+#            clean_links = Extract_Ranked_urls(links)
+            ua = UserAgent()
+            i=1
+            for url in df2_filter['URLs']:
+                para1 = doc.add_paragraph().add_run("-----------------------------------------------------------------------------------------")
+                para1.bold = True
+                para1.font.size = Pt(14)
+                para1.font.color.rgb = RGBColor(0, 0, 153)
+            #    docu.add_paragraph("")
+                txt1 = "**Content Set #" + str(i) + "**"
+                para2 = doc.add_paragraph().add_run(txt1)
+                para2.bold = True
+                para2.font.size = Pt(14)
+                para2.font.color.rgb = RGBColor(0, 0, 153)
+            #    docu.add_paragraph("")
+            #    docu.add_paragraph("")
+                txt2 = "URL #" + str(i) + ":    " + url
+                para3 = doc.add_paragraph().add_run(txt2)
+                para3.bold = True
+                para3.font.size = Pt(14)
+                para3.font.color.rgb = RGBColor(0, 0, 153)
+            #    docu.add_paragraph("")
+                para4 = doc.add_paragraph().add_run("-----------------------------------------------------------------------------------------")
+                para4.bold=True
+                para4.font.size = Pt(14)
+                para4.font.color.rgb = RGBColor(0, 0, 153)
+
+                with mock.patch.object(requests.cookies.RequestsCookieJar, 'update', lambda *args, **kwargs: 0):
+                    req = Request(url , headers={'User-Agent': ua.random})
+                    req.add_header('User-Agent', 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)')
+                    try:
+
+                        webpage = urlopen(req).read()
+
+                    except Exception as e:
+                        err = "Exception occured while extracting content - " + str(e)
+                        doc.add_paragraph(err)
+                    else:
+                        page_soup = soup(webpage, "html.parser")
+                        heading_tags = ["h1", "h2", "h3", "h4"]
+                        list2 = []
+                        for tags in page_soup.find_all([heading_tags, 'p']):
+                            if not tags.find([heading_tags, 'p']):
+                                list1 = tags.name + ' -> ' + tags.text.strip()
+                                if list1.startswith("h1"):
+                                    h1 = doc.add_heading(list1.replace("h1 -> ", ""), 1)
+                                    h1.style.font.color.rgb = RGBColor(0, 0, 139)
+                                    h1.style.font.size = Pt(14)
+                                    h1.style.font.bold = True
+                                    h1.style.font.all_caps = True
+                                elif list1.startswith("h2"):
+                                    h2 = doc.add_heading(list1.replace("h2 -> ", ""), 2)
+                                    h2.style.font.color.rgb = RGBColor(0, 0, 205)
+                                    h2.style.font.size = Pt(12)
+                                    h2.style.font.bold = True
+                                    h2.style.font.all_caps = True
+                                elif list1.startswith("h3"):
+                                    h3 = doc.add_heading(list1.replace("h3 -> ", ""), 3)
+                                    h3.style.font.color.rgb = RGBColor(0, 0, 255)
+                                    h3.style.font.size = Pt(10)
+                                    h3.style.font.bold = True
+                                    h3.style.font.all_caps = True
+                                elif list1.startswith("h4"):
+                                    h4 = doc.add_heading(list1.replace("h4 -> ", ""), 4)
+                                    h4.style.font.color.rgb = RGBColor(65, 105, 225)
+                                    h4.style.font.size = Pt(10)
+                                    h4.style.font.bold = True
+                                    h4.style.font.all_caps = True
+                                else:
+                                    try:
+                                        print(list1.replace("p -> ", ""))
+                                    except Exception as ee:
+                                        doc.add_paragraph(str(ee))
+                                    else:
+                                        doc.add_paragraph(remove_control_characters(list1.replace('\x00','')).replace("p -> ", ""))
+                                list2.append("\n\n")
+                                list2.append(list1)
+                                list3 = ''.join(filter(None, list2))
+
+            #    doc.add_paragraph(list1)
+                doc.add_paragraph("")
+                para5 = doc.add_paragraph().add_run("------------------------------------------------------------------------------------------")
+                para5.bold=True
+                para5.font.size = Pt(14)
+                para5.font.color.rgb = RGBColor(0, 0, 153)
+                #    docu.add_paragraph("")
+                para6 = doc.add_paragraph().add_run("------------------------------------------------------------------------------------------")
+                para6.bold=True
+                para6.font.size = Pt(14)
+                para6.font.color.rgb = RGBColor(0, 0, 153)
+
+                doc.add_page_break()
+                i+=1
+
             doc.save("Model Output - " + str(Topic)+".docx")
-#            doc.add_paragraph(data1)
-#    para.paragraph_format.space_before = Inches(0.5)
-#    para.paragraph_format.space_after = Inches(0.5)
 
-#doc.add_heading('Applied Artificial Intelligence for Schools Content Generation by Topic', 0)
-#            doc.save(str(Topic)+".docx")
-
-
-#            doc = Document()
-#            doc.add_paragraph(clean_links)
-#            doc.add_paragraph(data1)
-#            docx = Document(io.BytesIO(requests.get(doc).content))
-#            b64 = base64.b64encode(docx)  # some strings <-> bytes conversions necessary here
-#            href = f'<a href="data:file/docx;base64,{b64}">Download docx file</a>'
-#            st.markdown(href, unsafe_allow_html=True)
-#            doc.paragraph_format.space_after = Inches(1.0)
-#            try:
-#                doc.save(str(Topic)+".docx")
-#            except:
-#                print(sys.exc_info()[0], "occurred.")
-        st.markdown("Download Complete")
-    st.sidebar.markdown("*******************************")
-    if st.sidebar.checkbox("View the Extracted Contents"):
-        with st.spinner("Downloading the Contents..."):
-            links = scrape_google_all(Topic)
-            clean_links = Extract_Ranked_urls(links)
-            list3 = Extract_Contents(clean_links)
-            Extracted_Contents = View_Extracted_Contents(list3)
-            data = [content.strip() for content in Extracted_Contents.splitlines() if content]
-            for x in data:
-                st.write(x)
-            list2 = []
-            for url in clean_links:
-                downloaded = trafilatura.fetch_url(url)
-                trafilatura.extract(downloaded)
-                # outputs main content and comments as plain text ...
-                list1 = trafilatura.extract(downloaded, include_comments=False)
-                st.write("***************************************")
-                st.write(url)
-                if list1 is None:
-                    st.write("Contents not available")
-                else:
-                    st.write("Contents available")
-                ua = UserAgent()
-                response = requests.get(url, {"User-Agent": ua.random})
-
-                st.write("Response Code: ", response.status_code)
-#        if not st.sidebar.checkbox("View the Extracted Contents"):
-#            with st.spinner("Fetching the link to download..."):
-#            df = Extract_urls(Topic)
-#            list3 = Extract_Contents(df)
-#            st.markdown(download_link(list3, 'model_output.txt', 'Click here to download the extracted text'),unsafe_allow_html=True)
-#        View_Option = st.sidebar.radio("To view or Download Content: ",
-#                     ('View', 'Download'))
-#        if (View_Option == 'View'):
-#            st.write(list3)
-#        elif (View_Option == 'Download'):
-#            st.markdown(download_link(list3, 'model_output.txt', 'Click here to download the extracted text'),unsafe_allow_html=True)
 main()
