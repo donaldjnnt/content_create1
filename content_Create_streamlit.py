@@ -224,7 +224,7 @@ def Extract_urls(Topic):
 
 def Extract_URLs_New(Topic):
     query = Topic
-    driver_location = "C:\Users\Darcey\Documents\NEW_PYTHON\chromedriver.exe"
+    driver_location = "C:\\Users\\Darcey\\Documents\\NEW_PYTHON\\chromedriver.exe"
     options = webdriver.ChromeOptions()
     options.add_argument('--lang=en,en_US')
     # options.add_argument('--disable-gpu')
