@@ -224,7 +224,7 @@ def Extract_urls(Topic):
 
 def Extract_URLs_New(Topic):
     query = Topic
-    driver_location = "C:\\Users\\Darcey\\Documents\\NEW_PYTHON\\chromedriver.exe"
+#    driver_location = "C:\\Users\\Darcey\\Documents\\NEW_PYTHON\\chromedriver.exe"
     options = webdriver.ChromeOptions()
     options.add_argument('--lang=en,en_US')
     # options.add_argument('--disable-gpu')
@@ -238,7 +238,7 @@ def Extract_URLs_New(Topic):
     # options.add_argument('proxy-server=' + "115.42.65.14:8080")
     # options.add_argument('Referer=' + "https://www.google.com/")
     options.add_argument('--headless')
-    driver = webdriver.Chrome(executable_path=driver_location,options=options)
+    driver = webdriver.Chrome(options=options)
 
     driver.get("https://www.google.com/search?q={}&oq={}&hl=en&num=10".format(urllib.parse.quote(query),urllib.parse.quote(query)))
     p = driver.find_elements_by_class_name("tF2Cxc")
