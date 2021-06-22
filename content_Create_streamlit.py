@@ -237,8 +237,12 @@ def Extract_URLs_New(Topic):
     # options.add_argument('user-agent=' + ua['google chrome'])
     # options.add_argument('proxy-server=' + "115.42.65.14:8080")
     # options.add_argument('Referer=' + "https://www.google.com/")
+#    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
     options.add_argument('--headless')
-    driver = webdriver.Chrome(executable_path=driver_location, options=options)
+    options.add_argument('--disable-gpu')
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+#    driver = webdriver.Chrome(executable_path=driver_location, options=options)
 
     driver.get("https://www.google.com/search?q={}&oq={}&hl=en&num=10".format(urllib.parse.quote(query),urllib.parse.quote(query)))
     p = driver.find_elements_by_class_name("tF2Cxc")
