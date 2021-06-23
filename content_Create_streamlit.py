@@ -48,11 +48,6 @@ from docx.oxml import OxmlElement
 
 import unicodedata
 
-import selenium
-from selenium import webdriver
-
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.utils import ChromeType
 
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
@@ -60,7 +55,7 @@ def img_to_bytes(img_path):
     return encoded
 
 header_html = "<img src='data:image/png;base64,{}' class='img-fluid'>".format(
-    img_to_bytes("DSLogo.png")
+    img_to_bytes("C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg")
 )
 st.markdown(
     header_html, unsafe_allow_html=True,
@@ -225,91 +220,7 @@ def Extract_urls(Topic):
     df = pd.DataFrame(scrape_google(Topic), columns = ['link'])
     return df
 
-def Extract_URLs_New(Topic):
-    query = Topic
-    driver_location = "chromedriver"
-    options = webdriver.ChromeOptions()
-    options.add_argument('--lang=en,en_US')
-    # options.add_argument('--disable-gpu')
-    # options.add_argument('--no-sandbox')
-    options.add_argument('Accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/webp')
-    # options.add_argument('Accept-Encoding= gzip')
-    # options.add_argument('Accept-Language= en-US,en;q=0.9,es;q=0.8')
-    # options.add_argument('Upgrade-Insecure-Requests: 1')
-    # options.add_argument('image/apng,*/*;q=0.8,application/signed-exchange;v=b3')
-    # options.add_argument('user-agent=' + ua['google chrome'])
-    # options.add_argument('proxy-server=' + "115.42.65.14:8080")
-    # options.add_argument('Referer=' + "https://www.google.com/")
-#    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    driver = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install(), options=options)
-#    driver = webdriver.Chrome(executable_path=driver_location, options=options)
 
-    driver.get("https://www.google.com/search?q={}&oq={}&hl=en&num=10".format(urllib.parse.quote(query),urllib.parse.quote(query)))
-    p = driver.find_elements_by_class_name("tF2Cxc")
-    titles = driver.find_elements_by_class_name("yuRUbf")
-    descriptions = driver.find_elements_by_class_name("IsZvec")
-    time.sleep(10)
-
-    link_list = []
-    description_list = []
-    featured = False
-    featured_links = 0
-    title_list = []
-    featured_max = 0
-    featured_num = 0
-
-    df1 = pd.DataFrame(columns=["URLs"])
-    for index in range(len(p)):
-        p_items = p[index].get_attribute("innerHTML")
-    #    print(p_items)
-        items_soup = BeautifulSoup(p_items,"html.parser")
-        if(featured==False):
-            if((len(items_soup.text.split("\n")) != 2)):
-                print(items_soup.text.split("\n"))
-    #            df = df.append({'A': items_soup.text.split("\n")
-    #            df["B"] = items_soup.text.split("\n")[1]
-    #            if ((items_soup.select(".IsZvec") != None)
-    #                  and (items_soup.select(".IsZvec")[0].text != "") and (items_soup.select(".IsZvec") != "")):
-                a = items_soup.select("a",recursive=False)[0]["href"]
-                print(a)
-                df1 = df1.append({'URLs': a}, ignore_index = True)
-                link_list.append(a)
-        title_list.append(titles[index].text)
-        description_list.append(descriptions[index].text)
-    description_list_new = []
-    title_list_new = []
-    for index in range(len(description_list)):
-    #    if (description_list[index] == ""):
-    #        pass
-    #    elif (re.findall(r'<\w{1,}\s\w{1,}>',description_list[index]) != []):
-    #        pass
-    #    else:
-        description_list_new.append(description_list[index])
-        title_list_new.append(title_list[index])
-    description_list = description_list_new
-    title_list = title_list_new
-
-    df = pd.DataFrame(columns=["Title", "Description"])
-    i=0
-    for title in range(len(title_list)):
-        print(title_list[title])
-        print(description_list[title])
-        print("=======================")
-        df = df.append({'Title': title_list[title], 'Description': description_list[title]}, ignore_index = True)
-    #    df.loc[i].B = description_list[title]
-        i+=1
-
-    #print(link_list)
-    #print(len(title_list))
-    #print(len(link_list))
-
-    #for x in link_list:
-    #    print(x)
-    df2 = pd.concat([df, df1], axis=1)
-    return df2
 
 def View_Extracted_Contents(list3):
     Extracted_Contents = list3
@@ -389,32 +300,27 @@ def main():
     #if len(Topic)>0:
     if st.sidebar.button("Extract URLs for the given topic"):
         with st.spinner("Extracting..."):
-            df2 = Extract_URLs_New(Topic)
-            df2_filter = df2[df2['Title']!= ""]
-            df2_filter['url_rank'] = np.arange(len(df2_filter)) + 1
-            df3 = df2_filter[['url_rank', 'URLs']]
-            df3['URLRank_URLS'] = "URL #" + df3['url_rank'].astype(str) + " - " + df3['URLs']
-#            clean_links = Extract_Ranked_urls(links)
+            links = scrape_google_all(Topic)
+            clean_links = Extract_Ranked_urls(links)
             st.write("Below are the top URLs to extract content:")
-            for x in df3['URLRank_URLS']:
+            for x in clean_links:
                 st.write(x)
     st.sidebar.markdown("*******************************")
     if st.sidebar.button("Download Contents from URLs"):
         with st.spinner("Downloading..."):
-            df2 = Extract_URLs_New(Topic)
-            df2_filter = df2[df2['Title']!= ""]
-#            clean_links = Extract_Ranked_urls(links)
+            links = scrape_google_all(Topic)
+            clean_links = Extract_Ranked_urls(links)
 
 ############ Converting listof urls to dataframe and then to tuple to create the table in word document##########
 
-#            df = pd.DataFrame(clean_links, columns = ['urls'])
-            df2_filter['url_rank'] = np.arange(len(df2_filter)) + 1
-            df3 = df2_filter[['url_rank', 'URLs']]
+            df = pd.DataFrame(clean_links, columns = ['urls'])
+            df['url_rank'] = np.arange(len(df)) + 1
+            df1 = df[['url_rank', 'urls']]
             Search_for_These_values = ['youtube','.pdf','.pptx'] 
             pattern = '|'.join(Search_for_These_values)
-            df4 = df3.loc[~df3['URLs'].str.contains(pattern, case=False)]
+            df2 = df1.loc[~df1['urls'].str.contains(pattern, case=False)]
             #            print (df1)
-            datat = tuple(df3.itertuples(index=False, name=None))
+            datat = tuple(df1.itertuples(index=False, name=None))
 
 
             #            print(datat)
@@ -458,7 +364,7 @@ def main():
 
         ##### add logo in Zoned header
 
-            logo_path = 'DSLogo.png'    # Path of the image file
+            logo_path = 'C:\\Users\\Darcey\\Downloads\\DeepSphere Logo.jpg'    # Path of the image file
             section = doc.sections[0]   # Create a section
             sec_header = section.header   # Create header 
             header_tp = sec_header.add_paragraph()  # Add a paragraph in the header, you can add any anything in the paragraph
@@ -520,12 +426,11 @@ def main():
             #    doc = docx.Document()
             doc.add_page_break()
             #            text_split = []
-            df2 = Extract_URLs_New(Topic)
-            df2_filter = df2[df2['Title']!= ""]
-#            clean_links = Extract_Ranked_urls(links)
+            links = scrape_google_all(Topic)
+            clean_links = Extract_Ranked_urls(links)
             ua = UserAgent()
             i=1
-            for url in df2_filter['URLs']:
+            for url in clean_links:
                 para1 = doc.add_paragraph().add_run("-----------------------------------------------------------------------------------------")
                 para1.bold = True
                 para1.font.size = Pt(14)
