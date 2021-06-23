@@ -301,7 +301,9 @@ def main():
     if st.sidebar.button("Extract URLs for the given topic"):
         with st.spinner("Extracting..."):
             links = scrape_google_all(Topic)
+            st.write(links)
             clean_links = Extract_Ranked_urls(links)
+            st.write(clean_links)
             st.write("Below are the top URLs to extract content:")
             for x in clean_links:
                 st.write(x)
