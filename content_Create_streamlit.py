@@ -305,7 +305,6 @@ def main():
             clean_links = Extract_Ranked_urls(links)
             st.write(clean_links)
             st.write("Below are the top URLs to extract content:")
-            st.download_button('Download text', clean_links)
             for x in clean_links:
                 st.write(x)
     st.sidebar.markdown("*******************************")
